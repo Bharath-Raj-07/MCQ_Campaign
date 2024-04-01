@@ -9,7 +9,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.sql.Time;
+
 import java.time.Instant;
 @Getter
 @Setter
@@ -34,23 +34,19 @@ public class Campaign {
     private String campaignDescription;
 
     @NotNull(message = "Start date is required")
-    @NotEmpty
     @Column(name = "start_date",nullable = false)
     private Instant startDate;
 
     @NotNull(message = "End date is required")
-    @NotEmpty
     @Column(name = "end_date",nullable = false)
     private Instant endDate;
 
     @NotNull(message = "Max attempts is required")
-    @NotEmpty
     @Min(value = 1, message = "Max attempts must be greater than or equal to 1")
     @Column(name = "max_attempts",nullable = false)
     private Integer maxAttempts;
 
     @NotNull(message = "Pass percentage is required")
-    @NotEmpty
     @Min(value = 0, message = "Pass percentage cannot be negative")
     @Max(value = 100, message = "Pass percentage cannot be greater than 100")
     @Column(name = "pass_percentage",nullable = false)

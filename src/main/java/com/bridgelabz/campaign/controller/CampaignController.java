@@ -18,7 +18,7 @@ public class CampaignController {
 
     @PostMapping("/create")
     public Mono<ResponseEntity<ResponseMessage>> createCampaign(@RequestBody Campaign campaign) {
-        return campaignService.create(campaign);
+        return campaignService.createCampaign(campaign);
     }
 
     @GetMapping("/get")

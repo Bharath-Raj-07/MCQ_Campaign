@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 
 public interface CampaignService {
 
-    Mono<ResponseEntity<ResponseMessage>> create(Campaign campaign);
+    Mono<ResponseEntity<ResponseMessage>> createCampaign(Campaign campaign);
     Mono<ResponseEntity<ResponseMessage>> getAllCampaigns();
     Mono<ResponseEntity<ResponseMessage>> getCampaign(int campaignId);
     Mono<ResponseEntity<ResponseMessage>> update(int campaignId, Campaign updatedCampaign);
