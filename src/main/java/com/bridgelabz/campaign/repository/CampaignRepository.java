@@ -8,10 +8,11 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public interface CampaignRepository extends R2dbcRepository<Campaign, Integer> {
-    <T> Mono<T> deleteByCampaignName(String campaignName);
+
     Mono<Campaign> findByCampaignId(int campaignId);
     Mono<Boolean> existsByCampaignId(int campaignId);
     Mono<Object> deleteByCampaignId(int campaignId);
+    Flux<Object> deleteByCampaignName(String campaignName);
     Mono<Boolean> existsByCampaignName(String campaignName);
 
 }

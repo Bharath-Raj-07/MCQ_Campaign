@@ -2,8 +2,7 @@ package com.bridgelabz.campaign.controller;
 
 import com.bridgelabz.campaign.model.Campaign;
 import com.bridgelabz.campaign.service.CampaignServiceImpl;
-
-import com.bridgelabz.campaign.utility.Response;
+import com.bridgelabz.campaign.utility.ResponseMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -18,32 +17,32 @@ public class CampaignController {
     }
 
     @PostMapping("/create")
-    public Mono<ResponseEntity<Response>> createCampaign(@RequestBody Campaign campaign) {
+    public Mono<ResponseEntity<ResponseMessage>> createCampaign(@RequestBody Campaign campaign) {
         return campaignService.create(campaign);
     }
 
     @GetMapping("/get")
-    public Mono<ResponseEntity<Response>> getAllCampaigns() {
-        return campaignService.getAll();
+    public Mono<ResponseEntity<ResponseMessage>> getAllCampaigns() {
+        return campaignService.getAllCampaigns();
     }
 
     @GetMapping("/get/{campaignId}")
-    public Mono<ResponseEntity<Response>> getCampaignById(@PathVariable int campaignId) {
-        return campaignService.getOne(campaignId);
+    Mono<ResponseEntity<ResponseMessage>>getCampaignById(@PathVariable int campaignId) {
+        return campaignService.getCampaign(campaignId);
     }
 
     @PutMapping("/update/{campaignId}")
-    public Mono<ResponseEntity<Response>> updateCampaign(@PathVariable int campaignId, @RequestBody Campaign updatedCampaign) {
+    public Mono<ResponseEntity<ResponseMessage>> updateCampaign(@PathVariable int campaignId, @RequestBody Campaign updatedCampaign) {
         return campaignService.update(campaignId, updatedCampaign);
     }
 
     @DeleteMapping("/delete/campaignId/{campaignId}")
-    public Mono<ResponseEntity<Response>> deleteCampaignById(@PathVariable int campaignId) {
+    public Mono<ResponseEntity<ResponseMessage>> deleteCampaignById(@PathVariable int campaignId) {
         return campaignService.deleteById(campaignId);
     }
 
     @DeleteMapping("/delete/campaignName/{campaignName}")
-    public Mono<ResponseEntity<Response>> deleteCampaignByName(@PathVariable String campaignName) {
+    public Mono<ResponseEntity<ResponseMessage>> deleteCampaignByName(@PathVariable String campaignName) {
         return campaignService.deleteByName(campaignName);
     }
 

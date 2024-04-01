@@ -2,7 +2,7 @@ package com.bridgelabz.campaign.service;
 
 import com.bridgelabz.campaign.model.Campaign;
 import com.bridgelabz.campaign.repository.CampaignRepository;
-import com.bridgelabz.campaign.utility.Response;
+import com.bridgelabz.campaign.utility.ResponseMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -17,64 +17,94 @@ public class CampaignServiceImpl implements CampaignService{
     public CampaignServiceImpl(CampaignRepository campaignRepository) {
         this.campaignRepository = campaignRepository;
     }
+
     private static final Logger logger = LogManager.getLogger(CampaignServiceImpl.class);
+
     @Override
-    public Mono<ResponseEntity<Response>> create(Campaign campaign) {
-        logger.info("Campaign Created Successfully");
+    public Mono<ResponseEntity<ResponseMessage>> create(Campaign campaign) {
         return campaignRepository.save(campaign)
-                .map(savedCampaign -> new ResponseEntity<>(new Response(200,"Campaign created Successfully",savedCampaign), HttpStatus.OK))
-                .onErrorResume(e->Mono.just(new ResponseEntity<>(new Response(500,"Internal Server Error"),HttpStatus.INTERNAL_SERVER_ERROR)));
+                .flatMap(savedCampaign -> {
+                    int code = 200;
+                    String message = "Campaign created successfully";
+                    HttpStatus status = HttpStatus.OK;
+                    return Mono.just(new ResponseEntity<>(new ResponseMessage(code, message, savedCampaign), status));
+                })
+                .onErrorResume(e -> {
+                    int code = 500;
+                    String errorMessage = "Internal Server Error";
+                    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+                    return Mono.just(new ResponseEntity<>(new ResponseMessage(code, errorMessage, null), status));
+                });
     }
+
     @Override
-    public Mono<ResponseEntity<Response>> getAll() {
+    public Mono<ResponseEntity<ResponseMessage>> getAllCampaigns() {
         logger.debug("Attempting to retrieve all campaigns");
         return campaignRepository.findAll()
                 .collectList()
                 .flatMap(campaignList -> {
+                    int code;
+                    String message;
+                    HttpStatus status;
                     if (!campaignList.isEmpty()) {
-                        logger.info("Retrieved {} campaigns successfully", campaignList.size());
-                        return Mono.just(new ResponseEntity<>(new Response(200, "Campaigns retrieved successfully", campaignList), HttpStatus.OK));
+                        code = 200;
+                        message = "Campaigns retrieved successfully";
+                        status = HttpStatus.OK;
                     } else {
-                        logger.warn("No campaigns found");
-                        return Mono.just(new ResponseEntity<>(new Response(404, "Campaigns not found"), HttpStatus.NOT_FOUND));
+                        code = 404;
+                        message = "Campaigns not found";
+                        status = HttpStatus.NOT_FOUND;
                     }
+                    logger.info("All Campaigns successfully retrieved");
+                    return Mono.just(new ResponseEntity<>(new ResponseMessage(code, message, campaignList), status));
                 })
-                .switchIfEmpty(Mono.just(new ResponseEntity<>(new Response(404, "Campaigns not found"), HttpStatus.NOT_FOUND)))
+                .switchIfEmpty(Mono.just(new ResponseEntity<>(new ResponseMessage(404, "Campaigns not found", null), HttpStatus.NOT_FOUND)))
                 .onErrorResume(e -> {
-                    logger.error("Error occurred while retrieving campaigns: {}", e.getMessage());
-                    return Mono.just(new ResponseEntity<>(new Response(500, "Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR));
+                    logger.error("Error occurred while retrieving campaigns", e);
+                    int code = 500;
+                    String errorMessage = "Internal Server Error";
+                    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+                    return Mono.just(new ResponseEntity<>(new ResponseMessage(code, errorMessage, null), status));
                 });
     }
     @Override
-    public Mono<ResponseEntity<Response>> getOne(int campaignId) {
+    public Mono<ResponseEntity<ResponseMessage>> getCampaign(int campaignId) {
         logger.debug("Attempting to retrieve campaign with ID: {} ", campaignId);
         return campaignRepository.findByCampaignId(campaignId)
                 .map(campaign -> {
-                    logger.info("Campaign retrieved successfully: {}", campaign);
-                    return new ResponseEntity<>(new Response(200, "Campaign retrieved successfully", campaign), HttpStatus.OK);
+                    int code = 200;
+                    String message = "Campaign retrieved successfully.";
+                    HttpStatus status = HttpStatus.OK;
+                    logger.info("Campaign {} retrieved successfully.",campaignId);
+                    return new ResponseEntity<>(new ResponseMessage(code, message, campaign), status);
                 })
-                .defaultIfEmpty(new ResponseEntity<>(new Response(404, "Campaign not found"), HttpStatus.NOT_FOUND))
+                .defaultIfEmpty(new ResponseEntity<>(new ResponseMessage(404, "Campaign not found", null), HttpStatus.NOT_FOUND))
                 .onErrorResume(e -> {
-                    logger.error("Error occurred while retrieving campaign with ID {}: {}", campaignId, e.getMessage());
-                    return Mono.just(new ResponseEntity<>(new Response(500, "Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR));
+                    int code = 500;
+                    String errorMessage = "Internal Server Error";
+                    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+                    logger.error("Error occurred while retrieving campaign with ID {}: {}",campaignId,e.getMessage());
+                    return Mono.just(new ResponseEntity<>(new ResponseMessage(code, errorMessage, null), status));
                 });
     }
     @Override
-    public Mono<ResponseEntity<Response>> update(int campaignId, Campaign updatedCampaign) {
+    public Mono<ResponseEntity<ResponseMessage>> update(int campaignId, Campaign updatedCampaign) {
         logger.debug("Updating campaign with ID: {}", campaignId);
         return campaignRepository.findByCampaignId(campaignId)
                 .flatMap(existingCampaign -> {
-                    // Update the existing campaign with the new details
                     if (updatedCampaign.getCampaignName() != null) {
                         existingCampaign.setCampaignName(updatedCampaign.getCampaignName());
                     }
                     if (updatedCampaign.getCampaignDescription() != null) {
                         existingCampaign.setCampaignDescription(updatedCampaign.getCampaignDescription());
                     }
-                    if (updatedCampaign.getStartDate() != null) {
+                    if (updatedCampaign.getShortName() != null) {
+                        existingCampaign.setShortName(updatedCampaign.getShortName());
+                    }
+                    if (updatedCampaign.getStartDate() != null && updatedCampaign.getStartDate().isAfter(existingCampaign.getStartDate())) {
                         existingCampaign.setStartDate(updatedCampaign.getStartDate());
                     }
-                    if (updatedCampaign.getEndDate() != null) {
+                    if (updatedCampaign.getEndDate() != null && updatedCampaign.getEndDate().isAfter(existingCampaign.getEndDate())) {
                         existingCampaign.setEndDate(updatedCampaign.getEndDate());
                     }
                     if (updatedCampaign.getMaxAttempts() != null) {
@@ -83,58 +113,90 @@ public class CampaignServiceImpl implements CampaignService{
                     if (updatedCampaign.getPassPercentage() != null) {
                         existingCampaign.setPassPercentage(updatedCampaign.getPassPercentage());
                     }
-                    if (updatedCampaign.getShortName() != null) {
-                        existingCampaign.setShortName(updatedCampaign.getShortName());
-                    }
+                    existingCampaign.setActive(updatedCampaign.isActive());
+                    existingCampaign.setArchive(updatedCampaign.isArchive());
+
                     return campaignRepository.save(existingCampaign)
                             .map(updated -> {
-                                logger.info("Campaign updated successfully: {}", existingCampaign);
-                                return new ResponseEntity<>(new Response(200, "Campaign updated successfully", existingCampaign), HttpStatus.OK);
+                                int code = 200;
+                                String message = "Campaign updated successfully.";
+                                HttpStatus status = HttpStatus.OK;
+                                logger.info("Campaign updated successfully.");
+                                return new ResponseEntity<>(new ResponseMessage(code, message, existingCampaign), status);
                             });
                 })
-                .defaultIfEmpty(new ResponseEntity<>(new Response(404, "Campaign not found"), HttpStatus.NOT_FOUND))
+                .defaultIfEmpty(new ResponseEntity<>(new ResponseMessage(404, "Campaign not found", null), HttpStatus.NOT_FOUND))
                 .onErrorResume(e -> {
-                    logger.error("Error occurred while updating campaign with ID {}: {}", campaignId, e.getMessage());
-                    return Mono.just(new ResponseEntity<>(new Response(500, "Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR));
+                    int code = 500;
+                    String errorMessage = "Internal Server Error";
+                    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+                    logger.error("Error occurred while updating campaign with ID {}: {}",campaignId,e.getMessage());
+                    return Mono.just(new ResponseEntity<>(new ResponseMessage(code, errorMessage, null), status));
                 });
     }
     @Override
-    public Mono<ResponseEntity<Response>> deleteById(int campaignId) {
+    public Mono<ResponseEntity<ResponseMessage>> deleteById(int campaignId) {
         logger.debug("Attempting to delete campaign with ID: {}", campaignId);
         return campaignRepository.existsByCampaignId(campaignId)
                 .flatMap(exists -> {
+                    int code;
+                    String message;
+                    HttpStatus status;
                     if (exists) {
+                        code = 200;
+                        message = "Campaign deleted successfully.";
+                        status = HttpStatus.OK;
                         return campaignRepository.deleteByCampaignId(campaignId)
-                                .then(Mono.just(new ResponseEntity<>(new Response(200, "Campaign deleted successfully"), HttpStatus.OK)))
+                                .then(Mono.just(new ResponseEntity<>(new ResponseMessage(code, message, null), status)))
                                 .doOnSuccess(success -> logger.info("Campaign with ID {} deleted successfully", campaignId));
                     } else {
+                        code = 404;
+                        message = "Campaign not found";
+                        status = HttpStatus.NOT_FOUND;
                         logger.warn("Campaign with ID {} not found", campaignId);
-                        return Mono.just(new ResponseEntity<>(new Response(404, "Campaign not found"), HttpStatus.NOT_FOUND));
+                        return Mono.just(new ResponseEntity<>(new ResponseMessage(code, message, null), status));
                     }
                 })
                 .onErrorResume(e -> {
                     logger.error("Error occurred while deleting campaign with ID {}: {}", campaignId, e.getMessage());
-                    return Mono.just(new ResponseEntity<>(new Response(500, "Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR));
+                    int code = 500;
+                    String errorMessage = "Internal Server Error";
+                    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+                    return Mono.just(new ResponseEntity<>(new ResponseMessage(code, errorMessage, null), status));
                 });
     }
+
     @Override
-    public Mono<ResponseEntity<Response>> deleteByName(String campaignName) {
+    public Mono<ResponseEntity<ResponseMessage>> deleteByName(String campaignName) {
         logger.debug("Attempting to delete campaign by name: {}", campaignName);
         return campaignRepository.existsByCampaignName(campaignName)
                 .flatMap(exists -> {
+                    int code;
+                    String message;
+                    HttpStatus status;
                     if (exists) {
+                        code = 200;
+                        message = "Campaign deleted successfully.";
+                        status = HttpStatus.OK;
+                        logger.info("Campaign deleted successfully.");
                         return campaignRepository.deleteByCampaignName(campaignName)
-                                .then(Mono.just(new ResponseEntity<>(new Response(200, "Campaign deleted successfully"), HttpStatus.OK)))
+                                .then(Mono.just(new ResponseEntity<>(new ResponseMessage(code, message, null), status)))
                                 .doOnSuccess(success -> logger.info("Campaign with name '{}' deleted successfully", campaignName));
                     } else {
+                        code = 404;
+                        message = "Campaign not found.";
+                        status = HttpStatus.NOT_FOUND;
                         logger.warn("Campaign with name '{}' not found", campaignName);
-                        return Mono.just(new ResponseEntity<>(new Response(404, "Campaign not found"), HttpStatus.NOT_FOUND));
+                        return Mono.just(new ResponseEntity<>(new ResponseMessage(code, message, null), status));
                     }
                 })
-                .defaultIfEmpty(new ResponseEntity<>(new Response(404, "Campaign not found"), HttpStatus.NOT_FOUND))
+                .defaultIfEmpty(new ResponseEntity<>(new ResponseMessage(404, "Campaign not found", null), HttpStatus.NOT_FOUND))
                 .onErrorResume(e -> {
                     logger.error("Error occurred while deleting campaign by name '{}': {}", campaignName, e.getMessage());
-                    return Mono.just(new ResponseEntity<>(new Response(500, "Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR));
+                    int code = 500;
+                    String errorMessage = "Internal Server Error";
+                    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+                    return Mono.just(new ResponseEntity<>(new ResponseMessage(code, errorMessage, null), status));
                 });
     }
 
