@@ -39,9 +39,9 @@ public class CampaignValidator {
         }
 
         // Check if end date is at least 3 months after start date
-        Instant threeMonthsAfterStart = startDate.plus(Duration.ofDays(90)); // Assuming 3 months = 90 days
-        if (endDate.isBefore(threeMonthsAfterStart)) {
-            throw new IllegalArgumentException("End date must be at least 3 months after start date");
+        Instant nextDay = startDate.plus(Duration.ofDays(1)); // Assuming 3 months = 90 days
+        if (endDate.isBefore(nextDay)) {
+            throw new IllegalArgumentException("End date must be greater than start date");
         }
     }
 

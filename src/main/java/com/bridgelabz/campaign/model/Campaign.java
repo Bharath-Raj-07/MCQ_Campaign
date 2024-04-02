@@ -9,7 +9,6 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-
 import java.time.Instant;
 @Getter
 @Setter
@@ -35,8 +34,8 @@ public class Campaign {
 
     @NotNull(message = "Start date is required")
     @Column(name = "start_date",nullable = false)
-    private Instant startDate;
 
+    private Instant startDate;
     @NotNull(message = "End date is required")
     @Column(name = "end_date",nullable = false)
     private Instant endDate;
@@ -52,11 +51,12 @@ public class Campaign {
     @Column(name = "pass_percentage",nullable = false)
     private Integer passPercentage;
 
-    @Column(name = "is_active",nullable = false)
+    @NotNull
+    @Column(name = "is_active")
     private boolean isActive;
 
-    @Column(name = "is_archive",nullable = false)
+    @NotNull
+    @Column(name = "is_archive")
     private boolean isArchive;
-
 
 }

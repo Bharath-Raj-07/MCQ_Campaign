@@ -1,6 +1,7 @@
 package com.bridgelabz.campaign.controller;
 
 import com.bridgelabz.campaign.model.Campaign;
+import com.bridgelabz.campaign.model.CampaignDto;
 import com.bridgelabz.campaign.service.CampaignServiceImpl;
 import com.bridgelabz.campaign.utility.ResponseMessage;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +18,9 @@ public class CampaignController {
     }
 
     @PostMapping("/create")
-    public Mono<ResponseEntity<ResponseMessage>> createCampaign(@RequestBody Campaign campaign) {
-        return campaignService.createCampaign(campaign);
+    public Mono<ResponseEntity<ResponseMessage>> createCampaign(@RequestBody CampaignDto campaignDto) {
+        System.out.println("From controller -------------->>> "+campaignDto);
+        return campaignService.createCampaign(campaignDto);
     }
 
     @GetMapping("/get")
@@ -32,8 +34,8 @@ public class CampaignController {
     }
 
     @PutMapping("/update/{campaignId}")
-    public Mono<ResponseEntity<ResponseMessage>> updateCampaign(@PathVariable int campaignId, @RequestBody Campaign updatedCampaign) {
-        return campaignService.update(campaignId, updatedCampaign);
+    public Mono<ResponseEntity<ResponseMessage>> updateCampaign(@PathVariable int campaignId, @RequestBody CampaignDto updatedCampaignDto) {
+        return campaignService.update(campaignId, updatedCampaignDto);
     }
 
     @DeleteMapping("/delete/campaignId/{campaignId}")
