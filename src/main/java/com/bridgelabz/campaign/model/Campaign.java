@@ -34,8 +34,8 @@ public class Campaign {
 
     @NotNull(message = "Start date is required")
     @Column(name = "start_date",nullable = false)
-
     private Instant startDate;
+
     @NotNull(message = "End date is required")
     @Column(name = "end_date",nullable = false)
     private Instant endDate;

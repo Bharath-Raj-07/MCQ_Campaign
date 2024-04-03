@@ -13,8 +13,12 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.Instant;
 
 @Service
 @PropertySource("classpath:message.properties")
@@ -41,6 +45,7 @@ public class CampaignServiceImpl implements CampaignService{
         try {
             campaignValidator.validate(campaign); // Validate general campaign constraints
             campaignValidator.validateCampaignDates(campaign); // Validate campaign dates
+            campaignValidator.validateActivityStatus(campaign); // Validate activity status
         } catch (IllegalArgumentException e) {
             int code = HttpStatus.BAD_REQUEST.value();
             String errorMessage = env.getProperty("error.validationFailed") + ": " + e.getMessage();
@@ -124,6 +129,7 @@ public class CampaignServiceImpl implements CampaignService{
                     try {
                         campaignValidator.validate(campaign); // Validate general campaign constraints
                         campaignValidator.validateCampaignDates(campaign); // Validate campaign dates
+                        campaignValidator.validateActivityStatus(campaign); // Validate activity status
                         logger.debug("Campaign validation successful for update");
                     } catch (IllegalArgumentException e) {
                         // Return BAD_REQUEST response if validation fails
@@ -228,4 +234,32 @@ public class CampaignServiceImpl implements CampaignService{
                 });
     }
 
+    @Scheduled(fixedRate = 3600000) // Run every hour
+    public void scheduleCampaignActivation() {
+        campaignRepository.findAll()
+                .flatMap(campaign -> {
+                    try {
+                        Instant currentDate = Instant.now();
+                        boolean isActive = currentDate.isAfter(campaign.getStartDate()) && currentDate.isBefore(campaign.getEndDate());
+                        campaign.setActive(isActive);
+                        logger.info("Updated activity status of " + campaign.getCampaignName());
+                    } catch (Exception e) {
+                        logger.warn("An unexpected error occurred while processing campaign: " + campaign.getCampaignName() + ", Error: " + e.getMessage());
+                    }
+                    return Mono.just(campaign);
+                })
+                .collectList()
+                .flatMapMany(campaigns -> {
+                    // Save all campaigns in one batch
+                    return Flux.fromIterable(campaigns)
+                            .flatMap(campaignRepository::save)
+                            .onErrorResume(error -> {
+                                logger.error("Error occurred while saving campaigns: " + error.getMessage());
+                                return Mono.empty(); // Return an empty Mono to continue processing other campaigns
+                            });
+                })
+                .subscribe(savedCampaign -> {
+                    logger.info("Campaign " + savedCampaign.getCampaignName() + " updated");
+                });
+    }
 }

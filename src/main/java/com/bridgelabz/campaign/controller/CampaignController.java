@@ -19,7 +19,6 @@ public class CampaignController {
 
     @PostMapping("/create")
     public Mono<ResponseEntity<ResponseMessage>> createCampaign(@RequestBody CampaignDto campaignDto) {
-        System.out.println("From controller -------------->>> "+campaignDto);
         return campaignService.createCampaign(campaignDto);
     }
 

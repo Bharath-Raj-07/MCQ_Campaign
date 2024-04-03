@@ -38,11 +38,16 @@ public class CampaignValidator {
             throw new IllegalArgumentException("Start date must be greater than current date");
         }
 
-        // Check if end date is at least 3 months after start date
-        Instant nextDay = startDate.plus(Duration.ofDays(1)); // Assuming 3 months = 90 days
+        // Check if end date is at least 1 day after start date
+        Instant nextDay = startDate.plus(Duration.ofDays(1));
         if (endDate.isBefore(nextDay)) {
             throw new IllegalArgumentException("End date must be greater than start date");
         }
+    }
+    public void validateActivityStatus(Campaign campaign) {
+        Instant currentDate = Instant.now();
+        boolean isActive = currentDate.isAfter(campaign.getStartDate()) && currentDate.isBefore(campaign.getEndDate());
+        campaign.setActive(isActive);
     }
 
 }
