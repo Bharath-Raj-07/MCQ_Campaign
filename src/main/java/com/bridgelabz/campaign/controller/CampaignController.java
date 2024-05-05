@@ -1,6 +1,5 @@
 package com.bridgelabz.campaign.controller;
 
-import com.bridgelabz.campaign.model.Campaign;
 import com.bridgelabz.campaign.model.CampaignDto;
 import com.bridgelabz.campaign.service.CampaignServiceImpl;
 import com.bridgelabz.campaign.utility.ResponseMessage;
